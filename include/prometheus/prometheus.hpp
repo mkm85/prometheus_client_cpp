@@ -171,7 +171,7 @@ class UntypedValue {
 };
 
 template<typename MetricType>
-class SimpleCollector : public Collector, public std::enable_shared_from_this<SimpleCollector<MetricType> >, public MetricType
+class SimpleCollector : public Collector, public std::enable_shared_from_this<SimpleCollector<MetricType> >
 {
  public:
 
@@ -182,12 +182,24 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
         return ptr;  
     }
     void init() {
-        metricMap[Labels()] = SimpleCollector<MetricType>::shared_from_this();
     }
 
     SimpleCollector(const std::string& n, const std::string& h) : name(n), help(h) { } 
-    MetricType getMetric();
-    MetricType getMetric(Labels labels);
+    std::shared_ptr<MetricType> labels() {
+        // return default metric without labels
+        return labels(Labels());
+    }
+
+    std::shared_ptr<MetricType> labels(Labels labels) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::shared_ptr<MetricType> metric = metricMap[labels];
+        if (!metric) {
+            metric = std::make_shared<MetricType>();
+            metricMap[labels] = metric;
+        }
+        return metric;
+    }
+    
     void remove(Labels labels) { metricMap.erase(labels); }
     void clear() { metricMap.clear(); }
     MetricFamilySamples collectSamples() {
@@ -206,6 +218,8 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
     std::string name;
     std::string help;
     std::map<Labels, std::shared_ptr<MetricType> > metricMap;
+ private:
+    std::mutex mutex_;
 };
 
 

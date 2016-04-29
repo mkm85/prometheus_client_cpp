@@ -39,7 +39,7 @@ class Encoder : public boost::static_visitor<void> {
         printLabels();
         ss_ << " " << histogram.count << "\n";
     }
-    void operator()(const SummarySample& summary) const {
+    void operator()(const SummarySample& /*summary*/) const {
         // TODO
     }
     void operator()(const UntypedSample& untyped) const {

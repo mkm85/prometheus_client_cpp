@@ -7,6 +7,6 @@ using namespace prometheus;
 BOOST_AUTO_TEST_CASE(TestDefaultRegistry)
 {
     CounterPtr cf = CounterBuilder().name("foo").add();
-    cf->inc();
+    cf->labels()->inc();
     BOOST_CHECK_EQUAL(DefaultCollectorRegistry::instance()->collectors.size(), 1);
 }

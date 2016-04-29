@@ -10,16 +10,18 @@ BOOST_AUTO_TEST_CASE(ExpositionTest)
 {
     CollectorRegistry registry;
     CounterPtr cf = CounterBuilder().name("foo").help("help").build();
-    cf->inc();
+    cf->labels()->inc();
     registry.add(cf);
 
     UntypedPtr up = UntypedBuilder().name("bar").build();
     registry.add(up);
-    up->set(42.42);
+    up->labels()->set(42.42);
 
     HistogramPtr hu = HistogramBuilder().name("baz").build();
     registry.add(hu);
-    hu->observe(42);
+    hu->labels()->observe(42);
+
+    hu->labels({{"foo", "bar"}, {"baz", "42"}})->observe(300);
     
     TextExposition exposition;
     std::string out = exposition.collect(registry);
