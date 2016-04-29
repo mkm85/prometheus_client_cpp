@@ -56,17 +56,22 @@ class UntypedSample {
 
 typedef boost::variant<CounterSample, GaugeSample, HistogramSample, SummarySample, UntypedSample> Sample;
 
+
+
 class MetricFamilySample {
  public:
     Labels labels;
     Sample sample;
 };
 
+enum class MetricType { COUNTER, GAUGE, HISTOGRAM, SUMMARY, UNTYPED };
+
 class MetricFamilySamples
 {
  public:
     std::string name;
     std::string help;
+    MetricType type;
     std::vector<MetricFamilySample> samples;
 };
 
@@ -170,14 +175,24 @@ class UntypedValue {
     std::atomic<double> value_;
 };
 
-template<typename MetricType>
-class SimpleCollector : public Collector, public std::enable_shared_from_this<SimpleCollector<MetricType> >
+// Convert a ValueType to a MetricType enum
+template<typename T> struct GetType { static MetricType type(); };
+template<> inline MetricType GetType<CounterValue>::type()   { return MetricType::COUNTER; }
+template<> inline MetricType GetType<GaugeValue>::type()     { return MetricType::GAUGE; }
+template<> inline MetricType GetType<HistogramValue>::type() { return MetricType::HISTOGRAM; }
+template<> inline MetricType GetType<UntypedValue>::type()   { return MetricType::UNTYPED; }
+
+
+// The simple collector is a the basic class for all simple
+// collectors. A simple collector is one which can just collect one
+// metric type.
+template<typename T>
+class SimpleCollector : public Collector, public std::enable_shared_from_this<SimpleCollector<T> >
 {
  public:
-
-    static std::shared_ptr<SimpleCollector<MetricType> > create(const std::string& name, const std::string& help)
+    static std::shared_ptr<SimpleCollector<T> > create(const std::string& name, const std::string& help)
     {
-        auto ptr = std::shared_ptr<SimpleCollector<MetricType> >(new SimpleCollector<MetricType>(name, help));
+        auto ptr = std::shared_ptr<SimpleCollector<T> >(new SimpleCollector<T>(name, help));
         ptr->init();
         return ptr;  
     }
@@ -185,16 +200,16 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
     }
 
     SimpleCollector(const std::string& n, const std::string& h) : name(n), help(h) { } 
-    std::shared_ptr<MetricType> labels() {
+    std::shared_ptr<T> labels() {
         // return default metric without labels
         return labels(Labels());
     }
 
-    std::shared_ptr<MetricType> labels(Labels labels) {
+    std::shared_ptr<T> labels(Labels labels) {
         std::lock_guard<std::mutex> lock(mutex_);
-        std::shared_ptr<MetricType> metric = metricMap[labels];
+        std::shared_ptr<T> metric = metricMap[labels];
         if (!metric) {
-            metric = std::make_shared<MetricType>();
+            metric = std::make_shared<T>();
             metricMap[labels] = metric;
         }
         return metric;
@@ -203,10 +218,8 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
     void remove(Labels labels) { metricMap.erase(labels); }
     void clear() { metricMap.clear(); }
     MetricFamilySamples collectSamples() {
-        MetricFamilySamples samples;
-        samples.name = name;
-        samples.help = help;
-        
+        MetricFamilySamples samples {name, help, GetType<T>::type()};
+
         for (auto c : metricMap) {
             samples.samples.push_back(MetricFamilySample {c.first, c.second->collect() });
         }
@@ -217,7 +230,7 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
     }
     std::string name;
     std::string help;
-    std::map<Labels, std::shared_ptr<MetricType> > metricMap;
+    std::map<Labels, std::shared_ptr<T> > metricMap;
  private:
     std::mutex mutex_;
 };

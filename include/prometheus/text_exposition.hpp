@@ -96,17 +96,32 @@ class Encoder : public boost::static_visitor<void> {
 class TextExposition {
 
  public:
-    void printHeader(std::stringstream& ss);
+    void printHeader(std::stringstream& ss, const MetricFamilySamples& samples)
+    {
+        ss << "# HELP " << samples.name << " " << samples.help << "\n";
+        ss << "# TYPE " << samples.name << " " << typeToString(samples.type) << "\n";
+    }
+
+    std::string typeToString(MetricType type) {
+        switch(type) {
+        case MetricType::COUNTER: return "counter";
+        case MetricType::GAUGE: return "gauge";
+        case MetricType::HISTOGRAM: return "histogram";
+        case MetricType::SUMMARY: return "summary";
+        case MetricType::UNTYPED: return "untyped";
+        }
+    }
 
     std::string collect(CollectorRegistry& registry) {
         std::stringstream result;
         for (auto c : registry.collectors) {
             for (auto m : c->collect()) {
-                // print header
+                printHeader(result, m);
                 for (auto s : m.samples) {
                     Encoder const encoder(m.name, s.labels, result);
                     boost::apply_visitor(encoder, s.sample);
                 }
+                result << "\n";
             }
         }
         return result.str();
