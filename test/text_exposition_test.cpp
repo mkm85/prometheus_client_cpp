@@ -17,6 +17,10 @@ BOOST_AUTO_TEST_CASE(ExpositionTest)
     registry.add(up);
     up->labels()->set(42.42);
 
+    UntypedPtr up2 = UntypedBuilder().name("bar2").build();
+    registry.add(up2);
+    up2->labels()->set(1.0e-64);
+    
     HistogramPtr hu = HistogramBuilder().name("baz").build();
     registry.add(hu);
     hu->labels()->observe(42);

@@ -2,9 +2,9 @@
 
 #include "prometheus.hpp"
 
-#include <boost/variant.hpp>
-
+#include <limits>
 #include <sstream>
+#include <boost/variant.hpp>
 
 namespace prometheus {
 
@@ -114,6 +114,7 @@ class TextExposition {
 
     std::string collect(CollectorRegistry& registry) {
         std::stringstream result;
+        result.precision(std::numeric_limits<double>::max_digits10);
         for (auto c : registry.collectors) {
             for (auto m : c->collect()) {
                 printHeader(result, m);
