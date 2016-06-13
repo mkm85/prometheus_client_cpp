@@ -122,7 +122,7 @@ class GaugeValue {
     }
     GaugeSample collect() { return GaugeSample{gauge_}; }
  protected:
-    std::atomic<double> gauge_;
+    std::atomic<double> gauge_ = { 0.0 };
 };
 
 class HistogramValue;
@@ -130,8 +130,8 @@ typedef std::shared_ptr<HistogramValue> HistogramValuePtr;
 
 class Bucket {
  public:
-    std::atomic<uint64_t> count_;
-    double limit_;
+    std::atomic<uint64_t> count_ = { 0 };
+    double limit_ = { 0.0 };
 };
 
 class HistogramValue {
@@ -154,12 +154,12 @@ class HistogramValue {
         for (auto& b : buckets_) {
             bucketSamples.push_back(BucketSample{b.count_, b.limit_});
         }
-        bucketSamples.push_back(BucketSample{count_, INFINITY});
+        bucketSamples.push_back(BucketSample{count_, std::numeric_limits<double>::infinity()});
         return HistogramSample{count_, sum_, bucketSamples};
     }
  protected:
-    std::atomic<uint64_t> count_;
-    std::atomic<double> sum_;
+    std::atomic<uint64_t> count_ = { 0 };
+    std::atomic<double> sum_ = { 0.0 };
     std::vector<Bucket> buckets_;
 };
 

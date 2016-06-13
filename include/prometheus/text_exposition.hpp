@@ -80,11 +80,11 @@ class Encoder : public boost::static_visitor<void> {
     }
 
     void printDouble(std::stringstream& ss, double val) const {
-        if (val == INFINITY) {
+        if (val == std::numeric_limits<double>::infinity()) {
             ss << "+Inf";
             return;
         }
-        if (val == -INFINITY) {
+        if (val == -std::numeric_limits<double>::infinity()) {
             ss << "-Inf";
             return;
         }
@@ -109,6 +109,7 @@ class TextExposition {
         case MetricType::HISTOGRAM: return "histogram";
         case MetricType::SUMMARY: return "summary";
         case MetricType::UNTYPED: return "untyped";
+        default: return "unknown";
         }
     }
 
