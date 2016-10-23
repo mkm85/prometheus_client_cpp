@@ -6,10 +6,10 @@ set(src_dir
 
 set(src
   ${src_dir}/unit_test.cpp
-#  ${src_dir}/test_counter_builder.cpp
   ${src_dir}/collector_registry_test.cpp
-#  ${src_dir}/histogram_test.cpp
   ${src_dir}/text_exposition_test.cpp
+  ${src_dir}/text_exposition_parser.cpp
+  ${src_dir}/text_exposition_parser_test.cpp
   )
 
 set(performance_test_src
@@ -19,6 +19,8 @@ set(performance_test_src
 SET(CMAKE_CXX_FLAGS "-std=c++11")
 
 add_executable(unittest ${src})
+
+target_link_libraries(unittest boost_system)
 
 add_executable(performance_test ${performance_test_src})
 
