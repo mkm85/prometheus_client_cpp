@@ -96,13 +96,13 @@ class Encoder : public boost::static_visitor<void> {
 class TextExposition {
 
  public:
-    void printHeader(std::stringstream& ss, const MetricFamilySamples& samples)
+    static void printHeader(std::stringstream& ss, const MetricFamilySamples& samples)
     {
         ss << "# HELP " << samples.name << " " << samples.help << "\n";
         ss << "# TYPE " << samples.name << " " << typeToString(samples.type) << "\n";
     }
 
-    std::string typeToString(MetricType type) {
+    static std::string typeToString(MetricType type) {
         switch(type) {
         case MetricType::COUNTER: return "counter";
         case MetricType::GAUGE: return "gauge";
@@ -113,7 +113,7 @@ class TextExposition {
         }
     }
 
-    std::string collect(CollectorRegistry& registry) {
+    static std::string collect(CollectorRegistry& registry) {
         std::stringstream result;
         result.precision(std::numeric_limits<double>::max_digits10);
         for (auto c : registry.collectors) {

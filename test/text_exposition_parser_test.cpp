@@ -11,8 +11,8 @@ BOOST_AUTO_TEST_CASE(parseSimpleMetric)
     auto ms = metrics.getMetrics("foobar");
     BOOST_REQUIRE_EQUAL(ms.size(), 1);
     auto m = ms[0];
-    BOOST_CHECK_EQUAL("foobar", m.metricName);
-    BOOST_CHECK_EQUAL(m.metricValue, 42);
+    BOOST_CHECK_EQUAL("foobar", m.name);
+    BOOST_CHECK_EQUAL(m.value, 42);
 }
 
 BOOST_AUTO_TEST_CASE(parseLabel)
@@ -22,10 +22,10 @@ BOOST_AUTO_TEST_CASE(parseLabel)
     auto ms = metrics.getMetrics("foobar");
     BOOST_REQUIRE_EQUAL(ms.size(), 1);
     auto m = ms[0];
-    BOOST_CHECK_EQUAL("foobar", m.metricName);
-    BOOST_CHECK_EQUAL(m.metricValue, 42);
+    BOOST_CHECK_EQUAL("foobar", m.name);
+    BOOST_CHECK_EQUAL(m.value, 42);
 
-    BOOST_CHECK_EQUAL(m.kvMap["foo"], "bar");
+    BOOST_CHECK_EQUAL(m.tags["foo"], "bar");
 }
 
 BOOST_AUTO_TEST_CASE(parseLabels)
@@ -35,11 +35,11 @@ BOOST_AUTO_TEST_CASE(parseLabels)
     auto ms = metrics.getMetrics("foobar");
     BOOST_REQUIRE_EQUAL(ms.size(), 1);
     auto m = ms[0];
-    BOOST_CHECK_EQUAL("foobar", m.metricName);
-    BOOST_CHECK_EQUAL(m.metricValue, 42);
+    BOOST_CHECK_EQUAL("foobar", m.name);
+    BOOST_CHECK_EQUAL(m.value, 42);
 
-    BOOST_CHECK_EQUAL(m.kvMap["foo"], "bar");
-    BOOST_CHECK_EQUAL(m.kvMap["baz"], "4242");
+    BOOST_CHECK_EQUAL(m.tags["foo"], "bar");
+    BOOST_CHECK_EQUAL(m.tags["baz"], "4242");
 }
 
 BOOST_AUTO_TEST_CASE(parseTimestamp)
@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(parseTimestamp)
     auto ms = metrics.getMetrics("foobar");
     BOOST_REQUIRE_EQUAL(ms.size(), 1);
     auto m = ms[0];
-    BOOST_CHECK_EQUAL("foobar", m.metricName);
-    BOOST_CHECK_EQUAL(m.metricValue, 42);
+    BOOST_CHECK_EQUAL("foobar", m.name);
+    BOOST_CHECK_EQUAL(m.value, 42);
     BOOST_REQUIRE(m.timestamp);
     BOOST_CHECK_EQUAL(*(m.timestamp), 424242);
 }

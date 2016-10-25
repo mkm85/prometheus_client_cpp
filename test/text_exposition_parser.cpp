@@ -7,6 +7,7 @@
 #include <boost/spirit/include/qi_skip.hpp>
 #include <boost/spirit/include/qi_omit.hpp>
 #include <boost/spirit/include/qi_eol.hpp>
+#include <boost/spirit/include/qi_list.hpp>
 #include <boost/spirit/include/qi_char_class.hpp>
 #include <boost/spirit/include/qi_parse_auto.hpp>
 
@@ -18,37 +19,30 @@
 #include <string>
 #include <map>
 
-using namespace boost::spirit;
-using namespace boost::spirit::qi;
 
-BOOST_FUSION_ADAPT_STRUCT(Metric, metricName, kvMap, metricValue, timestamp);
+BOOST_FUSION_ADAPT_STRUCT(Metric, name, tags, value, timestamp);
 
 Metrics MetricsParser::parseMetrics(const std::string lines)
 {
-    typedef std::string::iterator iter_t;
-    
-    auto value = boost::spirit::qi::double_;
-    auto timestamp = (boost::spirit::qi::skip(boost::spirit::qi::space)[-boost::spirit::qi::ulong_long]);
+    using namespace boost::spirit;
+    using namespace boost::spirit::qi;
 
-    auto stringValue = +(boost::spirit::qi::alnum);
-    auto labelName = stringValue;
-    auto labelValue = '"' >> stringValue >> '"';
-
-    auto metricName = stringValue;
-
-    auto labelPair = labelName >> '=' >> labelValue >> -(boost::spirit::qi::char_(','));
-
-    auto labelPairs = ( '{' >> *labelPair >> '}' ) >> ' ' | ' ';
+    auto quotedString = '"' >> *(char_ - char_("\"")) >> '"';
+    auto metricName = +(alnum | char_("_:"));
+    auto metricLabel = +(alnum | char_("_"));
         
-    auto metricLine = metricName >> labelPairs >> value >> timestamp;
+    auto labelPair = metricLabel >> '=' >> quotedString;
+    auto labelPairs = -( '{' >> (labelPair % ',') >> '}' );
+        
+    auto metricLine = metricName >> labelPairs >> ' ' >> double_ >> omit[*space] >> -ulong_long;
 
-    auto commentLine = boost::spirit::qi::char_('#') >> *(char_ - eol);
+    auto commentLine = char_('#') >> *(char_ - eol);
 
-    auto line = *(boost::spirit::qi::omit[commentLine] | boost::spirit::qi::omit[eol]) >> metricLine;
+    auto line = *(omit[commentLine] | omit[eol]) >> metricLine;
     auto parser = *line;
     
     std::vector<Metric> ms;
 
-    boost::spirit::qi::parse(lines.begin(), lines.end(), parser, ms);
+    parse(lines.begin(), lines.end(), parser, ms);
     return Metrics(ms);
 }
