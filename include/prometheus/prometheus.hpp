@@ -288,9 +288,9 @@ class CounterBuilder {
     CounterPtr build() {
         return Counter::create(name_, help_);
     }
-    CounterPtr add() {
+    CounterPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         CounterPtr ptr = build();
-        DefaultCollectorRegistry::instance()->add(ptr);
+        registry->add(ptr);
         return ptr;
         
     }
@@ -308,9 +308,9 @@ class GaugeBuilder {
     GaugePtr build() {
         return Gauge::create(name_, help_);
     }
-    GaugePtr add() {
+    GaugePtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         GaugePtr ptr = build();
-        DefaultCollectorRegistry::instance()->add(ptr);
+        registry->add(ptr);
         return ptr;
         
     }
@@ -327,9 +327,9 @@ class HistogramBuilder {
     HistogramPtr build() {
         return Histogram::create(name_, help_);
     }
-    HistogramPtr add() {
+    HistogramPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         HistogramPtr ptr = build();
-        DefaultCollectorRegistry::instance()->add(ptr);
+        registry->add(ptr);
         return ptr;
         
     }
@@ -346,9 +346,9 @@ class UntypedBuilder {
     UntypedPtr build() {
         return Untyped::create(name_, help_);
     }
-    UntypedPtr add() {
+    UntypedPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         UntypedPtr ptr = build();
-        DefaultCollectorRegistry::instance()->add(ptr);
+        registry->add(ptr);
         return ptr;
         
     }
