@@ -130,17 +130,25 @@ typedef std::shared_ptr<HistogramValue> HistogramValuePtr;
 
 class Bucket {
  public:
+    Bucket(double limit) : limit_(limit) {}
     std::atomic<uint64_t> count_ = { 0 };
     double limit_ = { 0.0 };
 };
 
 class HistogramValue {
  public:
+    HistogramValue(std::vector<double> buckets) {
+        for(auto b : buckets) {
+            std::unique_ptr<Bucket> bucket(new Bucket(b));
+            buckets_.push_back(std::move(bucket));
+        }
+    }
+
     void observe(double val) {
-        for (Bucket& b : buckets_) {
+        for (auto& b : buckets_) {
             //put the value into all buckets which has a limit above the value
-            if (b.limit_ >= val) {
-                b.count_++;
+            if (b->limit_ >= val) {
+                b->count_++;
                 break;
             }
         }
@@ -152,7 +160,7 @@ class HistogramValue {
     HistogramSample collect() {
         std::vector<BucketSample> bucketSamples;
         for (auto& b : buckets_) {
-            bucketSamples.push_back(BucketSample{b.count_, b.limit_});
+            bucketSamples.push_back(BucketSample{b->count_, b->limit_});
         }
         bucketSamples.push_back(BucketSample{count_, std::numeric_limits<double>::infinity()});
         return HistogramSample{count_, sum_, bucketSamples};
@@ -160,7 +168,7 @@ class HistogramValue {
  protected:
     std::atomic<uint64_t> count_ = { 0 };
     std::atomic<double> sum_ = { 0.0 };
-    std::vector<Bucket> buckets_;
+    std::vector<std::unique_ptr<Bucket>> buckets_;
 };
 
 class UntypedValue {
@@ -190,16 +198,17 @@ template<typename T>
 class SimpleCollector : public Collector, public std::enable_shared_from_this<SimpleCollector<T> >
 {
  public:
-    static std::shared_ptr<SimpleCollector<T> > create(const std::string& name, const std::string& help)
+
+    static std::shared_ptr<SimpleCollector<T> > create(const std::string& name, const std::string& help, std::function< std::shared_ptr<T>(void)> typeCreator = [](){ return std::make_shared<T>(); })
     {
-        auto ptr = std::shared_ptr<SimpleCollector<T> >(new SimpleCollector<T>(name, help));
+        auto ptr = std::shared_ptr<SimpleCollector<T> >(new SimpleCollector<T>(name, help, typeCreator));
         ptr->init();
         return ptr;  
     }
     void init() {
     }
 
-    SimpleCollector(const std::string& n, const std::string& h) : name(n), help(h) { } 
+    SimpleCollector(const std::string& n, const std::string& h, std::function< std::shared_ptr<T>(void)> typeCreator) : name(n), help(h), typeCreator_(typeCreator) { } 
     std::shared_ptr<T> labels() {
         // return default metric without labels
         return labels(Labels());
@@ -209,7 +218,7 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
         std::lock_guard<std::mutex> lock(mutex_);
         std::shared_ptr<T> metric = metricMap[labels];
         if (!metric) {
-            metric = std::make_shared<T>();
+            metric = typeCreator_();
             metricMap[labels] = metric;
         }
         return metric;
@@ -232,6 +241,7 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
     std::string help;
     std::map<Labels, std::shared_ptr<T> > metricMap;
  private:
+    std::function< std::shared_ptr<T> (void)> typeCreator_;
     std::mutex mutex_;
 };
 
@@ -323,9 +333,11 @@ class HistogramBuilder {
  public:
     HistogramBuilder name(const std::string& name) { name_ = name; return *this; } 
     HistogramBuilder help(const std::string& help) { help_ = help; return *this; }
+    HistogramBuilder buckets(const std::vector<double>& buckets) { buckets_ = buckets; return *this; }
     
     HistogramPtr build() {
-        return Histogram::create(name_, help_);
+        std::vector<double> buckets = buckets_;
+        return Histogram::create(name_, help_, [buckets](){return std::make_shared<HistogramValue>(buckets); });
     }
     HistogramPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         HistogramPtr ptr = build();
@@ -335,7 +347,8 @@ class HistogramBuilder {
     }
  private:
     std::string name_ = "default";
-    std::string help_ = "default help";   
+    std::string help_ = "default help";
+    std::vector<double> buckets_ = { .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10 };
 };
 
 class UntypedBuilder {

@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(untyped)
 BOOST_AUTO_TEST_CASE(histogram)
 {
     CollectorRegistry registry;
-    HistogramPtr h = HistogramBuilder().name("bar").build();
+    HistogramPtr h = HistogramBuilder().name("bar").buckets({10,50,200,1000,5000}).build();
     registry.add(h);
     h->labels()->observe(42.42);
     std::string out = TextExposition::collect(registry);
@@ -54,10 +54,13 @@ BOOST_AUTO_TEST_CASE(histogram)
     auto metrics = MetricsParser::parseMetrics(out);
     auto count = metrics.findMetric("bar_count");
     auto sum = metrics.findMetric("bar_sum");
+    auto bucket1 = metrics.findMetric("bar_bucket", {{"le", "50" }});
     BOOST_REQUIRE(count);
     BOOST_REQUIRE(sum);
+    BOOST_REQUIRE(bucket1);
     BOOST_CHECK_EQUAL(count->value, 1);
     BOOST_CHECK_EQUAL(sum->value, 42.42);
+    BOOST_CHECK_EQUAL(bucket1->value, 1);
 }
 
 BOOST_AUTO_TEST_CASE(gauge)
