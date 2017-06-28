@@ -54,13 +54,22 @@ BOOST_AUTO_TEST_CASE(histogram)
     auto metrics = MetricsParser::parseMetrics(out);
     auto count = metrics.findMetric("bar_count");
     auto sum = metrics.findMetric("bar_sum");
+    auto bucket0 = metrics.findMetric("bar_bucket", {{"le", "10" }});
     auto bucket1 = metrics.findMetric("bar_bucket", {{"le", "50" }});
+    auto bucket2 = metrics.findMetric("bar_bucket", {{"le", "200" }});
+    auto bucket3 = metrics.findMetric("bar_bucket", {{"le", "+Inf" }});
     BOOST_REQUIRE(count);
     BOOST_REQUIRE(sum);
+    BOOST_REQUIRE(bucket0);
     BOOST_REQUIRE(bucket1);
+    BOOST_REQUIRE(bucket2);
+    BOOST_REQUIRE(bucket3);
     BOOST_CHECK_EQUAL(count->value, 1);
     BOOST_CHECK_EQUAL(sum->value, 42.42);
+    BOOST_CHECK_EQUAL(bucket0->value, 0);
     BOOST_CHECK_EQUAL(bucket1->value, 1);
+    BOOST_CHECK_EQUAL(bucket2->value, 1);
+    BOOST_CHECK_EQUAL(bucket3->value, 1);
 }
 
 BOOST_AUTO_TEST_CASE(gauge)

@@ -149,7 +149,6 @@ class HistogramValue {
             //put the value into all buckets which has a limit above the value
             if (b->limit_ >= val) {
                 b->count_++;
-                break;
             }
         }
         count_++;
