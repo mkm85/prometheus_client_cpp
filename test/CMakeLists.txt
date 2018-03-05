@@ -7,6 +7,7 @@ set(src_dir
 set(src
   ${src_dir}/unit_test.cpp
   ${src_dir}/collector_registry_test.cpp
+  ${src_dir}/custom_collector_test.cpp
   ${src_dir}/text_exposition_test.cpp
   ${src_dir}/text_exposition_parser.cpp
   ${src_dir}/text_exposition_parser_test.cpp
