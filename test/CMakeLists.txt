@@ -1,4 +1,5 @@
 project(unittest)
+find_package( Threads )
 
 find_package(Boost REQUIRED COMPONENTS system program_options unit_test_framework)
 
@@ -28,5 +29,6 @@ set_property(TARGET unittest PROPERTY CXX_STANDARD 11)
 
 add_executable(performance_test "${performance_test_src}")
 
-target_link_libraries(performance_test Boost::program_options pthread prometheus_cpp)
+target_link_libraries(performance_test Boost::program_options prometheus_cpp)
 set_property(TARGET performance_test PROPERTY CXX_STANDARD 11)
+target_link_libraries( performance_test ${CMAKE_THREAD_LIBS_INIT} )

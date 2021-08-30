@@ -198,16 +198,16 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
 {
  public:
 
-    static std::shared_ptr<SimpleCollector<T> > create(const std::string& name, const std::string& help, std::function< std::shared_ptr<T>(void)> typeCreator = [](){ return std::make_shared<T>(); })
+    static std::shared_ptr<SimpleCollector<T> > create(const std::string& name, const std::string& help, std::function< std::shared_ptr<T>(void)> typeCreator)
     {
         auto ptr = std::shared_ptr<SimpleCollector<T> >(new SimpleCollector<T>(name, help, typeCreator));
         ptr->init();
-        return ptr;  
+        return ptr;
     }
     void init() {
     }
 
-    SimpleCollector(const std::string& n, const std::string& h, std::function< std::shared_ptr<T>(void)> typeCreator) : name(n), help(h), typeCreator_(typeCreator) { } 
+    SimpleCollector(const std::string& n, const std::string& h, std::function< std::shared_ptr<T>(void)> typeCreator) : name(n), help(h), typeCreator_(typeCreator) { }
     std::shared_ptr<T> labels() {
         // return default metric without labels
         return labels(Labels());
@@ -222,7 +222,7 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
         }
         return metric;
     }
-    
+
     void remove(Labels labels) { metricMap.erase(labels); }
     void clear() { metricMap.clear(); }
     MetricFamilySamples collectSamples() {
@@ -234,7 +234,7 @@ class SimpleCollector : public Collector, public std::enable_shared_from_this<Si
         return samples;
     };
     std::vector<MetricFamilySamples> collect() {
-        return { collectSamples() }; 
+        return { collectSamples() };
     }
     std::string name;
     std::string help;
@@ -291,49 +291,49 @@ class DefaultCollectorRegistry {
 
 class CounterBuilder {
  public:
-    CounterBuilder name(const std::string& name) { name_ = name; return *this; } 
+    CounterBuilder name(const std::string& name) { name_ = name; return *this; }
     CounterBuilder help(const std::string& help) { help_ = help; return *this; }
 
     CounterPtr build() {
-        return Counter::create(name_, help_);
+        return Counter::create(name_, help_, [](){ return std::make_shared<CounterValue>(); });
     }
     CounterPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         CounterPtr ptr = build();
         registry->add(ptr);
         return ptr;
-        
+
     }
  private:
     std::string name_ = "default";
-    std::string help_ = "default help";      
+    std::string help_ = "default help";
 };
 
 
 class GaugeBuilder {
  public:
-    GaugeBuilder name(const std::string& name) { name_ = name; return *this; } 
+    GaugeBuilder name(const std::string& name) { name_ = name; return *this; }
     GaugeBuilder help(const std::string& help) { help_ = help; return *this; }
-    
+
     GaugePtr build() {
-        return Gauge::create(name_, help_);
+        return Gauge::create(name_, help_, [](){ return std::make_shared<GaugeValue>(); });
     }
     GaugePtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         GaugePtr ptr = build();
         registry->add(ptr);
         return ptr;
-        
+
     }
  private:
     std::string name_ = "default";
-    std::string help_ = "default help"; 
+    std::string help_ = "default help";
 };
 
 class HistogramBuilder {
  public:
-    HistogramBuilder name(const std::string& name) { name_ = name; return *this; } 
+    HistogramBuilder name(const std::string& name) { name_ = name; return *this; }
     HistogramBuilder help(const std::string& help) { help_ = help; return *this; }
     HistogramBuilder buckets(const std::vector<double>& buckets) { buckets_ = buckets; return *this; }
-    
+
     HistogramPtr build() {
         std::vector<double> buckets = buckets_;
         return Histogram::create(name_, help_, [buckets](){return std::make_shared<HistogramValue>(buckets); });
@@ -342,7 +342,7 @@ class HistogramBuilder {
         HistogramPtr ptr = build();
         registry->add(ptr);
         return ptr;
-        
+
     }
  private:
     std::string name_ = "default";
@@ -352,21 +352,21 @@ class HistogramBuilder {
 
 class UntypedBuilder {
  public:
-    UntypedBuilder name(const std::string& name) { name_ = name; return *this; } 
+    UntypedBuilder name(const std::string& name) { name_ = name; return *this; }
     UntypedBuilder help(const std::string& help) { help_ = help; return *this; }
-    
+
     UntypedPtr build() {
-        return Untyped::create(name_, help_);
+        return Untyped::create(name_, help_, [](){ return std::make_shared<UntypedValue>(); });
     }
     UntypedPtr add(CollectorRegistryPtr registry = DefaultCollectorRegistry::instance()) {
         UntypedPtr ptr = build();
         registry->add(ptr);
         return ptr;
-        
+
     }
  private:
     std::string name_ = "default";
-    std::string help_ = "default help";   
+    std::string help_ = "default help";
 };
 
 
