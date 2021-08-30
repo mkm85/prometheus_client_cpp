@@ -1,5 +1,7 @@
 project(unittest)
 
+find_package(Boost REQUIRED COMPONENTS system program_options unit_test_framework)
+
 set(src_dir
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -17,12 +19,14 @@ set(performance_test_src
   ${src_dir}/performance_test.cpp
   )
 
-SET(CMAKE_CXX_FLAGS "-std=c++11")
 
-add_executable(unittest ${src})
 
-target_link_libraries(unittest boost_system)
+add_executable(unittest "${src}")
 
-add_executable(performance_test ${performance_test_src})
+target_link_libraries(unittest Boost::unit_test_framework prometheus_cpp)
+set_property(TARGET unittest PROPERTY CXX_STANDARD 11)
 
-target_link_libraries(performance_test boost_program_options pthread)
+add_executable(performance_test "${performance_test_src}")
+
+target_link_libraries(performance_test Boost::program_options pthread prometheus_cpp)
+set_property(TARGET performance_test PROPERTY CXX_STANDARD 11)
